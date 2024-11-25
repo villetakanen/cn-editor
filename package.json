@@ -1,0 +1,24 @@
+{
+	"name": "cn-editor",
+	"version": "1.0.0-alpha.1",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"dev": "vite",
+		"build": "vite build",
+		"preview": "vite preview",
+		"check": "biome check --write"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"typescript": "^5.7.2",
+		"vite": "^5.4.11"
+	},
+	"dependencies": {
+		"lit": "^3.2.1",
+		"turndown": "^7.2.0"
+	}
+}
