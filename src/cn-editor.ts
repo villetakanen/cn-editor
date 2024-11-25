@@ -1,14 +1,36 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+import './styles.css';
 
 @customElement('cn-editor')
 export class CnEditor extends LitElement {
-  @property({ type: String }) value = '';
+  // Attributes
+  @property({ type: String, reflect: true }) value = '';
   @property({ type: Object }) selection: { start: number; end: number } | null =
     null;
-  @property({ type: String }) placeholder = '';
+  @property({ type: String, reflect: true }) placeholder = '';
+  @property({ type: Boolean, reflect: true }) disabled = false;
 
   private _textArea: HTMLTextAreaElement | null = null;
+
+  static formAssociated = true;
+
+  private _internals: ElementInternals;
+
+  constructor() {
+    super();
+    this._internals = this.attachInternals();
+  }
+
+  private _updateFormValue() {
+    this._internals.setFormValue(this.value);
+  }
+
+  updated(changedProperties: Map<string, unknown>) {
+    if (changedProperties.has('value')) {
+      this._updateFormValue();
+    }
+  }
 
   render() {
     return html`
@@ -19,6 +41,7 @@ export class CnEditor extends LitElement {
         @blur="${this._handleBlur}"
         @focus="${this._handleFocus}"
         placeholder="${this.placeholder}"
+        ?disabled="${this.disabled}"
       >${this.value}</textarea>
     `;
   }
@@ -128,17 +151,25 @@ export class CnEditor extends LitElement {
       display: contents;
     }
     :host textarea {
+      /* Sizing and spacing */
       width: 100%;
       height: 100%;
-      border: none;
-      transition: background 0.3s ease, border 0.3s ease;
-      background: var(--background-editor, black);
-      padding: var(--cn-grid);
-      color: var(--color-on-field);
-      border-bottom: 1px solid var(--color-border);
-      border-radius: var(--cn-border-radius-field);
       margin: 0;
       box-sizing: border-box;
+      padding: var(--_cn-editor-padding);
+      
+      /* Borders */
+      border: var(--_cn-editor-border);
+      border-bottom: var(--_cn-editor-border-bottom);
+      border-radius: var(--_cn-editor-border-radius);
+      outline: none;
+
+      
+      transition: background 0.3s ease, border 0.3s ease;
+      background: var(--background-editor, black);
+      color: var(--color-on-field);
+      
+      
       // UI text-styling
       font-family: var(--cn-font-family-ui);
       font-weight: var(--cn-font-weight-ui);
