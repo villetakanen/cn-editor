@@ -1,19 +1,17 @@
-import { LitElement, css, html } from "lit";
-import { customElement, property } from "lit/decorators.js";
-import TurndownService from "turndown";
+import { LitElement, css, html } from 'lit';
+import { customElement, property } from 'lit/decorators.js';
 
-@customElement("cn-editor")
+@customElement('cn-editor')
 export class CnEditor extends LitElement {
-	@property({ type: String }) value = "";
-	@property({ type: Object }) selection: { start: number; end: number } | null =
-		null;
-	@property({ type: String }) placeholder = "";
+  @property({ type: String }) value = '';
+  @property({ type: Object }) selection: { start: number; end: number } | null =
+    null;
+  @property({ type: String }) placeholder = '';
 
-	private _textArea: HTMLTextAreaElement | null = null;
-	private _turndownService = new TurndownService();
+  private _textArea: HTMLTextAreaElement | null = null;
 
-	render() {
-		return html`
+  render() {
+    return html`
       <textarea
         @input="${this._handleInput}"
         @change="${this._handleChange}"
@@ -23,105 +21,108 @@ export class CnEditor extends LitElement {
         placeholder="${this.placeholder}"
       >${this.value}</textarea>
     `;
-	}
+  }
 
-	firstUpdated() {
-		this._textArea = this.shadowRoot?.querySelector(
-			"textarea",
-		) as HTMLTextAreaElement;
-	}
+  firstUpdated() {
+    this._textArea = this.shadowRoot?.querySelector(
+      'textarea',
+    ) as HTMLTextAreaElement;
+  }
 
-	_handleInput(e: Event) {
-		e.stopImmediatePropagation();
-		this.value = (e.target as HTMLTextAreaElement).value;
-		this.dispatchEvent(
-			new CustomEvent("input", { detail: { value: this.value } }),
-		);
-	}
+  _handleInput(e: Event) {
+    e.stopImmediatePropagation();
+    this.value = (e.target as HTMLTextAreaElement).value;
+    this.dispatchEvent(
+      new CustomEvent('input', { detail: { value: this.value } }),
+    );
+  }
 
-	_handleChange(e: Event) {
-		e.stopImmediatePropagation();
-		this.value = (e.target as HTMLTextAreaElement).value;
-		this.dispatchEvent(
-			new CustomEvent("change", { detail: { value: this.value } }),
-		);
-	}
+  _handleChange(e: Event) {
+    e.stopImmediatePropagation();
+    this.value = (e.target as HTMLTextAreaElement).value;
+    this.dispatchEvent(
+      new CustomEvent('change', { detail: { value: this.value } }),
+    );
+  }
 
-	_handlePaste(e: ClipboardEvent) {
-		e.preventDefault();
-		const html = e.clipboardData?.getData("text/html") || "";
-		const text = e.clipboardData?.getData("text/plain") || "";
+  async _handlePaste(e: ClipboardEvent) {
+    e.preventDefault();
+    const html = e.clipboardData?.getData('text/html') || '';
+    const text = e.clipboardData?.getData('text/plain') || '';
 
-		if (html) {
-			const markdown = this._turndownService.turndown(html);
-			this.insertText(markdown);
-		} else {
-			this.insertText(text);
-		}
-		this.dispatchEvent(
-			new CustomEvent("change", { detail: { value: this.value } }),
-		);
-	}
+    const TurndownService = (await import('turndown')).default;
+    const _turndownService = new TurndownService();
 
-	async _copy() {
-		if (this._textArea) {
-			const selectedText = this._textArea.value.substring(
-				this._textArea.selectionStart || 0,
-				this._textArea.selectionEnd || 0,
-			);
-			try {
-				await navigator.clipboard.writeText(selectedText);
-			} catch (err) {
-				console.error("Failed to copy: ", err);
-			}
-		}
-	}
+    if (html) {
+      const markdown = _turndownService.turndown(html);
+      this.insertText(markdown);
+    } else {
+      this.insertText(text);
+    }
+    this.dispatchEvent(
+      new CustomEvent('change', { detail: { value: this.value } }),
+    );
+  }
 
-	select() {
-		if (this._textArea) {
-			this._textArea.select();
-		}
-	}
+  async _copy() {
+    if (this._textArea) {
+      const selectedText = this._textArea.value.substring(
+        this._textArea.selectionStart || 0,
+        this._textArea.selectionEnd || 0,
+      );
+      try {
+        await navigator.clipboard.writeText(selectedText);
+      } catch (err) {
+        console.error('Failed to copy: ', err);
+      }
+    }
+  }
 
-	copy() {
-		this.select();
-		this._copy(); // Use the updated _copy method
-	}
+  select() {
+    if (this._textArea) {
+      this._textArea.select();
+    }
+  }
 
-	insertText(text: string) {
-		if (this._textArea) {
-			const start = this._textArea.selectionStart || 0;
-			const end = this._textArea.selectionEnd || 0;
-			const newValue =
-				this.value.substring(0, start) + text + this.value.substring(end);
-			this._textArea.value = newValue;
-			this._textArea.selectionStart = start + text.length;
-			this._textArea.selectionEnd = start + text.length;
-			this.value = newValue;
-			this.dispatchEvent(
-				new CustomEvent("input", { detail: { value: this.value } }),
-			);
-		}
-	}
+  copy() {
+    this.select();
+    this._copy(); // Use the updated _copy method
+  }
 
-	_handleBlur() {
-		if (this._textArea) {
-			this.selection = {
-				start: this._textArea.selectionStart || 0,
-				end: this._textArea.selectionEnd || 0,
-			};
-		}
-	}
+  insertText(text: string) {
+    if (this._textArea) {
+      const start = this._textArea.selectionStart || 0;
+      const end = this._textArea.selectionEnd || 0;
+      const newValue =
+        this.value.substring(0, start) + text + this.value.substring(end);
+      this._textArea.value = newValue;
+      this._textArea.selectionStart = start + text.length;
+      this._textArea.selectionEnd = start + text.length;
+      this.value = newValue;
+      this.dispatchEvent(
+        new CustomEvent('input', { detail: { value: this.value } }),
+      );
+    }
+  }
 
-	_handleFocus() {
-		if (this._textArea && this.selection) {
-			this._textArea.selectionStart = this.selection.start;
-			this._textArea.selectionEnd = this.selection.end;
-			this.selection = null;
-		}
-	}
+  _handleBlur() {
+    if (this._textArea) {
+      this.selection = {
+        start: this._textArea.selectionStart || 0,
+        end: this._textArea.selectionEnd || 0,
+      };
+    }
+  }
 
-	static styles = css`
+  _handleFocus() {
+    if (this._textArea && this.selection) {
+      this._textArea.selectionStart = this.selection.start;
+      this._textArea.selectionEnd = this.selection.end;
+      this.selection = null;
+    }
+  }
+
+  static styles = css`
     :host {
       display: contents;
     }

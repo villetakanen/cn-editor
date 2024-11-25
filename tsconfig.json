@@ -1,16 +1,16 @@
 {
-	"compilerOptions": {
-		"target": "es2020",
-		"module": "esnext",
-		"moduleResolution": "node",
-		"strict": true,
-		"declaration": true,
-		"declarationDir": "dist",
-		"sourceMap": true,
-		"outDir": "dist",
-		"esModuleInterop": true,
-		"experimentalDecorators": true,
-		"useDefineForClassFields": false
-	},
-	"include": ["src/**/*.ts"]
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "strict": true,
+    "declaration": true,
+    "declarationDir": "dist",
+    "sourceMap": true,
+    "outDir": "dist",
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false
+  },
+  "include": ["src/**/*.ts"]
 }
