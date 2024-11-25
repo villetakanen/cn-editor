@@ -99,7 +99,7 @@ export class CnEditor extends LitElement {
 			this._textArea.selectionEnd = start + text.length;
 			this.value = newValue;
 			this.dispatchEvent(
-				new CustomEvent("cn-editor-input", { detail: { value: this.value } }),
+				new CustomEvent("input", { detail: { value: this.value } }),
 			);
 		}
 	}
