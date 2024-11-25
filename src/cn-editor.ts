@@ -111,6 +111,7 @@ export class CnEditor extends LitElement {
         start: this._textArea.selectionStart || 0,
         end: this._textArea.selectionEnd || 0,
       };
+      this.dispatchEvent(new CustomEvent('selectionchange'));
     }
   }
 

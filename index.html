@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="module" src="./src/cn-editor.ts"></script>
+    <title>CN-Editor Test</title>
+    <style>
+    /* Light mode variables */
+    :root {
+        --background-color: #ffffff;
+        --text-color: #000000;
+        --border-color: #ccc;
+        --selection-info-bg: #f0f0f0;
+    }
+
+    /* Dark mode variables */
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --background-color: #1e1e1e;
+            --text-color: #ffffff;
+            --border-color: #444;
+            --selection-info-bg: #333;
+        }
+    }
+
+    /* Apply the variables */
+    body {
+        background-color: var(--background-color);
+        color: var(--text-color);
+    }
+
+    .container {
+        background-color: var(--background-color);
+    }
+
+    .column {
+        border-color: var(--border-color);
+    }
+
+    #selection-info {
+        background-color: var(--selection-info-bg);
+    }
+        .container {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            height: 100vh;
+        }
+        .column {
+            flex: 1;
+            border: 1px solid #ccc;
+            padding: 15px;
+        }
+        #selection-info {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+        }
+        #editor {
+            height: calc(100% - 120px);  /* Subtract space for the h2 */
+        }
+        cn-editor {
+            height: 100%;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+  <div class="container">
+    <div class="column">
+            <h2>Editor</h2>
+            <div id="editor">
+                <cn-editor id="demoEditor" autofocus>
+                    <div slot="content">Initial content goes here</div>
+                </cn-editor>
+            </div>
+        </div>
+        <div class="column">
+            <h2>Preview</h2>
+            <div id="selection-info">
+                <h3>Selection Info</h3>
+                <p>Start: <span id="selection-start">0</span></p>
+                <p>End: <span id="selection-end">0</span></p>
+            </div>
+        <div id="preview"></div>
+      </div>
+    </div>
+
+    <script>
+    const editor = document.getElementById('demoEditor');
+    const preview = document.getElementById('preview');
+    const selectionStart = document.getElementById('selection-start');
+    const selectionEnd = document.getElementById('selection-end');
+
+    editor.addEventListener('input', (e) => {
+        preview.innerHTML = e.target.value;
+    });
+
+    editor.addEventListener('selectionchange', (e) => {
+        const selection = window.getSelection();
+        selectionStart.textContent = selection.anchorOffset;
+        selectionEnd.textContent = selection.focusOffset;
+    });
+    </script>
+  </body>
+</html>
