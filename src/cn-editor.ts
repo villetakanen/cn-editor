@@ -42,7 +42,8 @@ export class CnEditor extends LitElement {
         @focus="${this._handleFocus}"
         placeholder="${this.placeholder}"
         ?disabled="${this.disabled}"
-      >${this.value}</textarea>
+        .value="${this.value}"
+      ></textarea>
     `;
   }
 
@@ -56,7 +57,7 @@ export class CnEditor extends LitElement {
     e.stopImmediatePropagation();
     this.value = (e.target as HTMLTextAreaElement).value;
     this.dispatchEvent(
-      new CustomEvent('input', { detail: { value: this.value } }),
+      new Event('input', { bubbles: true, composed: true }),
     );
   }
 
@@ -64,7 +65,7 @@ export class CnEditor extends LitElement {
     e.stopImmediatePropagation();
     this.value = (e.target as HTMLTextAreaElement).value;
     this.dispatchEvent(
-      new CustomEvent('change', { detail: { value: this.value } }),
+      new Event('change', { bubbles: true, composed: true }),
     );
   }
 
@@ -83,7 +84,7 @@ export class CnEditor extends LitElement {
       this.insertText(text);
     }
     this.dispatchEvent(
-      new CustomEvent('change', { detail: { value: this.value } }),
+      new Event('change', { bubbles: true, composed: true }),
     );
   }
 
