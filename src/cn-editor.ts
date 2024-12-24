@@ -56,17 +56,13 @@ export class CnEditor extends LitElement {
   _handleInput(e: Event) {
     e.stopImmediatePropagation();
     this.value = (e.target as HTMLTextAreaElement).value;
-    this.dispatchEvent(
-      new Event('input', { bubbles: true, composed: true }),
-    );
+    this.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
   }
 
   _handleChange(e: Event) {
     e.stopImmediatePropagation();
     this.value = (e.target as HTMLTextAreaElement).value;
-    this.dispatchEvent(
-      new Event('change', { bubbles: true, composed: true }),
-    );
+    this.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
   }
 
   async _handlePaste(e: ClipboardEvent) {
@@ -83,9 +79,7 @@ export class CnEditor extends LitElement {
     } else {
       this.insertText(text);
     }
-    this.dispatchEvent(
-      new Event('change', { bubbles: true, composed: true }),
-    );
+    this.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
   }
 
   async _copy() {
