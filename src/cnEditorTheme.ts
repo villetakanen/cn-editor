@@ -1,4 +1,6 @@
+import { HighlightStyle } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
+import { tags as t } from '@lezer/highlight';
 
 export const editorBaseTheme = EditorView.theme(
   {
@@ -96,6 +98,7 @@ export const editorBaseTheme = EditorView.theme(
 
     // --- Styling for Line Numbers Gutter ---
     '.cm-gutters': {
+      minWidth: 'calc(2 * var(--cn-gap))', // Minimum width for line numbers
       backgroundColor:
         'var(--color-elevation-1, var(--background-editor, black))', // Gutter background
       color: 'var(--color-on-button, cyan)', // Default color for gutter text (line numbers)
@@ -107,13 +110,51 @@ export const editorBaseTheme = EditorView.theme(
 
     // Styling for the active line in the gutter
     '.cm-gutter.cm-lineNumbers .cm-activeLineGutter': {
+      width: '100%', // Full width for active line gutter
       backgroundColor:
         'var(--color-elevation-2, var(--background-editor, black))',
     },
     '.cm-activeLineGutter': {
+      width: '100%', // Full width for active line gutter
       backgroundColor:
         'var(--color-elevation-3, var(--background-editor, black))',
     },
+
+    '& .cm-punctuation, & .cm-linkMark, & .cm-emphasisMark, & .cm-strongMark, & .cm-headingMark, & .cm-quoteMark, & .cm-listMark, & .cm-processingInstruction':
+      {
+        color: 'red',
+      },
   },
   { dark: document.body.classList.contains('dark') },
 );
+
+export const cnMarkdownHighlightStyle = HighlightStyle.define([
+  {
+    tag: t.heading1,
+    fontSize: 'var(--cn-heading-1-font-size)',
+    fontWeight: 'var(--cn-heading-1-font-weight)',
+    lineHeight: 'var(--cn-heading-1-line-height)',
+  },
+  {
+    tag: t.heading2,
+    fontSize: 'var(--cn-heading-2-font-size)',
+    fontWeight: 'var(--cn-heading-2-font-weight)',
+    lineHeight: 'var(--cn-heading-2-line-height)',
+  },
+  {
+    tag: t.heading3,
+    fontSize: 'var(--cn-heading-3-font-size)',
+    fontWeight: 'var(--cn-heading-3-font-weight)',
+    lineHeight: 'var(--cn-heading-3-line-height)',
+  },
+  {
+    tag: t.heading4,
+    fontSize: 'var(--cn-heading-4-font-size)',
+    fontWeight: 'var(--cn-heading-4-font-weight)',
+    lineHeight: 'var(--cn-heading-4-line-height)',
+  },
+
+  { tag: t.strong, fontWeight: 'bold' },
+  { tag: t.emphasis, fontStyle: 'italic' },
+  { tag: t.link, textDecoration: 'underline' },
+]);

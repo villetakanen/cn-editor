@@ -1,45 +1,88 @@
-import { history } from '@codemirror/commands';
-import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
-import { languages } from '@codemirror/language-data';
 import { Compartment, EditorState } from '@codemirror/state';
-import { EditorView, placeholder as cmPlaceholder } from '@codemirror/view';
-import { basicSetup } from 'codemirror';
+import {
+  EditorView,
+  placeholder as cmPlaceholder,
+  lineNumbers,
+} from '@codemirror/view';
+// Libs
 import { LitElement, css, html } from 'lit';
 import { customElement, property, query } from 'lit/decorators.js';
+
+// Local imports
 import './styles.css';
 import { createEditorState } from './cnEditorConfig';
-import { pasteHtmlAsMarkdown } from './cnPasteHandler';
 
 @customElement('cn-editor')
 export class CnEditor extends LitElement {
-  // Attributes
+  // --- Properties, all reflect to attributes --------------------------------
   @property({ type: String, reflect: true }) value = '';
-  @property({ type: Object }) selection: { start: number; end: number } | null =
-    null;
   @property({ type: String, reflect: true }) placeholder = '';
   @property({ type: Boolean, reflect: true }) disabled = false;
+  // Show/hide gutter (line numbers) from the editor
+  @property({ type: Boolean, reflect: true }) gutter = false;
 
-  // *** Local state **********************************************************
+  // --- Local state ----------------------------------------------------------
 
-  // @query to get the Codemate 6 container - Note that ID's are local to the
-  // shadow DOM, and so we can use the same ID in multiple components without
-  // conflict
+  // The container for the CodeMirror editor, the id is shadow DOM scoped
   @query('#editor-container') private _editorContainer!: HTMLDivElement;
+
+  // The CodeMirror editor instance
   private _editorView?: EditorView;
   private _placeholderCompartment = new Compartment();
   private _disabledCompartment = new Compartment();
+  private _gutterCompartment = new Compartment();
 
-  // *** Form associated element **********************************************
+  // Store the value on focus for potential use in blur event
+  private _valueOnFocus = '';
+  // Flag to prevent re-entrant focus calls
+  private _isDelegatingFocus = false;
+
+  // --- Form associated element ----------------------------------------------
   static formAssociated = true;
   private _internals: ElementInternals;
 
   constructor() {
     super();
     this._internals = this.attachInternals();
+    this.addEventListener('focus', this._handleHostFocus.bind(this)); // Bind here for consistency
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    if (this.getAttribute('tabindex') === null) {
+      this.setAttribute('tabindex', '0');
+    }
   }
 
   private _updateFormValue() {
     this._internals.setFormValue(this.value);
+  }
+
+  private _handleHostFocus(event: FocusEvent) {
+    // This is the native focus event handler for the <cn-editor> host.
+    // External listeners will receive THIS event.
+    // console.log('[CN-EDITOR] _handleHostFocus (Native Host Focus) CALLED. Current activeElement:', document.activeElement);
+
+    if (this._isDelegatingFocus) {
+      // console.log('[CN-EDITOR] Already delegating focus, ignoring re-entrant call.');
+      return;
+    }
+
+    // If CodeMirror's content DOM is not already the active element, delegate focus.
+    if (
+      this._editorView &&
+      document.activeElement !== this._editorView.contentDOM
+    ) {
+      // console.log('[CN-EDITOR] Host focused, delegating to CodeMirror.');
+      this._isDelegatingFocus = true;
+      this._editorView.focus();
+
+      requestAnimationFrame(() => {
+        this._isDelegatingFocus = false;
+      });
+    }
+    // DO NOT dispatch a new CustomEvent('focus') here. The native event is sufficient.
+    // _valueOnFocus will be set by CodeMirror's internal onFocus callback.
   }
 
   render() {
@@ -50,45 +93,33 @@ export class CnEditor extends LitElement {
 
   firstUpdated() {
     if (this._editorContainer) {
+      this._editorContainer.addEventListener(
+        'focusout',
+        this._handleFocusOut.bind(this),
+      );
+
       const state = createEditorState(
         this.value,
         this.placeholder,
         this.disabled,
+        this.gutter,
         this._placeholderCompartment,
         this._disabledCompartment,
+        this._gutterCompartment, // <<< Pass gutter compartment
         {
           // Callbacks object
           onDocChanged: (newDoc) => {
             if (this.value !== newDoc) {
-              this.value = newDoc; // Sync back to Lit property
+              this.value = newDoc;
             }
-            // This handles the 'input' event
             this.dispatchEvent(
               new Event('input', { bubbles: true, composed: true }),
             );
           },
-          onFocus: (event, view) => {
-            // this._valueOnFocus = view.state.doc.toString();
-            this.dispatchEvent(
-              new CustomEvent('focus', {
-                bubbles: true,
-                composed: true,
-                detail: event,
-              }),
-            );
-          },
-          onBlur: (event, view) => {
-            this.dispatchEvent(
-              new CustomEvent('blur', {
-                bubbles: true,
-                composed: true,
-                detail: event,
-              }),
-            );
-            // Optional: 'change' event logic if value changed since focus
-            // if (this._valueOnFocus !== view.state.doc.toString()) {
-            //   this.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
-            // }
+          onFocus: (cmFocusEvent, view) => {
+            // This is called when CodeMirror's contentDOM itself gains focus.
+            // This is the most reliable place to set _valueOnFocus.
+            this._valueOnFocus = view.state.doc.toString();
           },
         },
       );
@@ -97,6 +128,10 @@ export class CnEditor extends LitElement {
         state,
         parent: this._editorContainer,
       });
+    } else {
+      console.error(
+        '[cn-editor]: CodeMirror container not found in firstUpdated!',
+      );
     }
   }
 
@@ -131,23 +166,26 @@ export class CnEditor extends LitElement {
         ),
       });
     }
+    // --- Handle gutter property change ---
+    if (changedProperties.has('gutter') && this._editorView) {
+      this._editorView.dispatch({
+        effects: this._gutterCompartment.reconfigure(
+          this.gutter ? lineNumbers() : [],
+        ),
+      });
+    }
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
+    this.removeEventListener('focus', this._handleHostFocus); // No need to bind again if bound in constructor or using arrow func
     this._editorView?.destroy();
-  }
-
-  _handleInput(e: Event) {
-    e.stopImmediatePropagation();
-    this.value = (e.target as HTMLTextAreaElement).value;
-    this.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-  }
-
-  _handleChange(e: Event) {
-    e.stopImmediatePropagation();
-    this.value = (e.target as HTMLTextAreaElement).value;
-    this.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+    if (this._editorContainer) {
+      this._editorContainer.removeEventListener(
+        'focusout',
+        this._handleFocusOut.bind(this),
+      ); // Or store bound ref
+    }
   }
 
   async _handlePaste(e: ClipboardEvent) {
@@ -165,6 +203,45 @@ export class CnEditor extends LitElement {
       this.insertText(text);
     }
     this.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+  }
+
+  private _handleFocusOut(event: FocusEvent) {
+    //console.log('[cn-editor] _handleFocusOut CALLED. relatedTarget:', event.relatedTarget, 'Current activeElement:', document.activeElement);
+    const shadow = this.shadowRoot;
+
+    if (!shadow) {
+      console.error('[cn-editor] ShadowRoot not found in _handleFocusOut.');
+      return;
+    }
+
+    let focusHasLeftComponent = false;
+    if (!event.relatedTarget) {
+      // Focus lost to browser chrome or non-focusable area
+      focusHasLeftComponent = true;
+    } else {
+      // Focus went to an element that is NOT the host itself AND is NOT within the shadow DOM
+      if (
+        event.relatedTarget !== this &&
+        !shadow.contains(event.relatedTarget as Node)
+      ) {
+        focusHasLeftComponent = true;
+      }
+    }
+
+    if (focusHasLeftComponent) {
+      // console.log('[CN-EDITOR] Focus truly moved outside component (from _editorContainer focusout). Value on focus:', this._valueOnFocus, 'Current value:', this.value);
+
+      // DO NOT dispatch custom 'blur' event from here anymore.
+      // The native 'blur' event on the host element will be the one external listeners get.
+      // this.dispatchEvent(new CustomEvent('blur', { /* ... */ }));
+
+      if (this._valueOnFocus !== this.value) {
+        // console.log('[CN-EDITOR] Value changed since focus, dispatching component change event from _handleFocusOut.');
+        this.dispatchEvent(
+          new Event('change', { bubbles: true, composed: true }),
+        );
+      }
+    }
   }
 
   select() {
