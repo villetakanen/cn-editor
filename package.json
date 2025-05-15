@@ -1,6 +1,6 @@
 {
   "name": "cn-editor",
-  "version": "1.0.0-beta.2",
+  "version": "2.0.0-alpha.1",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -18,7 +18,20 @@
     "vite": "^5.4.11"
   },
   "dependencies": {
+    "@codemirror/commands": "^6.8.1",
+    "@codemirror/lang-markdown": "^6.3.2",
+    "@codemirror/language": "^6.11.0",
+    "@codemirror/language-data": "^6.5.1",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.36.8",
+    "@lezer/highlight": "^1.2.1",
+    "codemirror": "^6.0.1",
+    "dompurify": "^3.2.5",
     "lit": "^3.2.1",
-    "turndown": "^7.2.0"
+    "turndown": "^7.2.0",
+    "turndown-plugin-gfm": "^1.0.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@biomejs/biome", "esbuild"]
   }
 }
