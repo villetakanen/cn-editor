@@ -1,6 +1,14 @@
+import { history } from '@codemirror/commands';
+import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
+import { languages } from '@codemirror/language-data';
+import { Compartment, EditorState } from '@codemirror/state';
+import { EditorView, placeholder as cmPlaceholder } from '@codemirror/view';
+import { basicSetup } from 'codemirror';
 import { LitElement, css, html } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, query } from 'lit/decorators.js';
 import './styles.css';
+import { createEditorState } from './cnEditorConfig';
+import { pasteHtmlAsMarkdown } from './cnPasteHandler';
 
 @customElement('cn-editor')
 export class CnEditor extends LitElement {
@@ -11,10 +19,18 @@ export class CnEditor extends LitElement {
   @property({ type: String, reflect: true }) placeholder = '';
   @property({ type: Boolean, reflect: true }) disabled = false;
 
-  private _textArea: HTMLTextAreaElement | null = null;
+  // *** Local state **********************************************************
 
+  // @query to get the Codemate 6 container - Note that ID's are local to the
+  // shadow DOM, and so we can use the same ID in multiple components without
+  // conflict
+  @query('#editor-container') private _editorContainer!: HTMLDivElement;
+  private _editorView?: EditorView;
+  private _placeholderCompartment = new Compartment();
+  private _disabledCompartment = new Compartment();
+
+  // *** Form associated element **********************************************
   static formAssociated = true;
-
   private _internals: ElementInternals;
 
   constructor() {
@@ -26,31 +42,100 @@ export class CnEditor extends LitElement {
     this._internals.setFormValue(this.value);
   }
 
-  updated(changedProperties: Map<string, unknown>) {
-    if (changedProperties.has('value')) {
-      this._updateFormValue();
-    }
-  }
-
   render() {
-    return html`
-      <textarea
-        @input="${this._handleInput}"
-        @change="${this._handleChange}"
-        @paste="${this._handlePaste}"
-        @blur="${this._handleBlur}"
-        @focus="${this._handleFocus}"
-        placeholder="${this.placeholder}"
-        ?disabled="${this.disabled}"
-        .value="${this.value}"
-      ></textarea>
-    `;
+    // Note: since 2.0.0, we are using CodeMirror 6, and set all the options
+    // trough its API.
+    return html`<div id="editor-container"></div>`;
   }
 
   firstUpdated() {
-    this._textArea = this.shadowRoot?.querySelector(
-      'textarea',
-    ) as HTMLTextAreaElement;
+    if (this._editorContainer) {
+      const state = createEditorState(
+        this.value,
+        this.placeholder,
+        this.disabled,
+        this._placeholderCompartment,
+        this._disabledCompartment,
+        {
+          // Callbacks object
+          onDocChanged: (newDoc) => {
+            if (this.value !== newDoc) {
+              this.value = newDoc; // Sync back to Lit property
+            }
+            // This handles the 'input' event
+            this.dispatchEvent(
+              new Event('input', { bubbles: true, composed: true }),
+            );
+          },
+          onFocus: (event, view) => {
+            // this._valueOnFocus = view.state.doc.toString();
+            this.dispatchEvent(
+              new CustomEvent('focus', {
+                bubbles: true,
+                composed: true,
+                detail: event,
+              }),
+            );
+          },
+          onBlur: (event, view) => {
+            this.dispatchEvent(
+              new CustomEvent('blur', {
+                bubbles: true,
+                composed: true,
+                detail: event,
+              }),
+            );
+            // Optional: 'change' event logic if value changed since focus
+            // if (this._valueOnFocus !== view.state.doc.toString()) {
+            //   this.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+            // }
+          },
+        },
+      );
+
+      this._editorView = new EditorView({
+        state,
+        parent: this._editorContainer,
+      });
+    }
+  }
+
+  updated(changedProperties: Map<string, unknown>) {
+    if (changedProperties.has('value')) {
+      this._updateFormValue();
+      if (
+        this._editorView &&
+        this.value !== this._editorView.state.doc.toString()
+      ) {
+        this._editorView.dispatch({
+          changes: {
+            from: 0,
+            to: this._editorView.state.doc.length,
+            insert: this.value,
+          },
+        });
+      }
+    }
+    // Reconfigure placeholder and disabled state using compartments
+    if (changedProperties.has('placeholder') && this._editorView) {
+      this._editorView.dispatch({
+        effects: this._placeholderCompartment.reconfigure(
+          cmPlaceholder(this.placeholder),
+        ),
+      });
+    }
+    if (changedProperties.has('disabled') && this._editorView) {
+      this._editorView.dispatch({
+        effects: this._disabledCompartment.reconfigure(
+          EditorState.readOnly.of(this.disabled),
+        ),
+      });
+    }
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this._editorView?.destroy();
   }
 
   _handleInput(e: Event) {
@@ -82,62 +167,45 @@ export class CnEditor extends LitElement {
     this.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
   }
 
-  async _copy() {
-    if (this._textArea) {
-      const selectedText = this._textArea.value.substring(
-        this._textArea.selectionStart || 0,
-        this._textArea.selectionEnd || 0,
-      );
-      try {
-        await navigator.clipboard.writeText(selectedText);
-      } catch (err) {
-        console.error('Failed to copy: ', err);
+  select() {
+    if (this._editorView) {
+      this._editorView.dispatch({
+        selection: { anchor: 0, head: this._editorView.state.doc.length },
+        scrollIntoView: true, // Ensure selection is visible
+      });
+      this._editorView.focus();
+    }
+  }
+
+  async _copySelectionToClipboard() {
+    // New name for clarity
+    if (this._editorView) {
+      const { state } = this._editorView;
+      const selection = state.selection.main;
+      if (!selection.empty) {
+        const selectedText = state.doc.sliceString(
+          selection.from,
+          selection.to,
+        );
+        try {
+          await navigator.clipboard.writeText(selectedText);
+        } catch (err) {
+          console.error('Failed to copy: ', err);
+        }
       }
     }
   }
 
-  select() {
-    if (this._textArea) {
-      this._textArea.select();
-    }
-  }
-
   copy() {
-    this.select();
-    this._copy(); // Use the updated _copy method
+    this._copySelectionToClipboard();
   }
 
   insertText(text: string) {
-    if (this._textArea) {
-      const start = this._textArea.selectionStart || 0;
-      const end = this._textArea.selectionEnd || 0;
-      const newValue =
-        this.value.substring(0, start) + text + this.value.substring(end);
-      this._textArea.value = newValue;
-      this._textArea.selectionStart = start + text.length;
-      this._textArea.selectionEnd = start + text.length;
-      this.value = newValue;
-      this.dispatchEvent(
-        new CustomEvent('input', { detail: { value: this.value } }),
-      );
-    }
-  }
-
-  _handleBlur() {
-    if (this._textArea) {
-      this.selection = {
-        start: this._textArea.selectionStart || 0,
-        end: this._textArea.selectionEnd || 0,
-      };
-      this.dispatchEvent(new CustomEvent('selectionchange'));
-    }
-  }
-
-  _handleFocus() {
-    if (this._textArea && this.selection) {
-      this._textArea.selectionStart = this.selection.start;
-      this._textArea.selectionEnd = this.selection.end;
-      this.selection = null;
+    if (this._editorView) {
+      // Replace current selection or insert at cursor
+      this._editorView.dispatch(this._editorView.state.replaceSelection(text));
+      // this.value will be updated by the updateListener
+      this._editorView.focus(); // Ensure editor is focused
     }
   }
 
@@ -145,51 +213,9 @@ export class CnEditor extends LitElement {
     :host {
       display: contents;
     }
-    :host textarea {
-      /* Sizing and spacing */
+    #editor-container { /* The div CodeMirror attaches to */
       width: 100%;
       height: 100%;
-      margin: 0;
-      box-sizing: border-box;
-      padding: var(--_cn-editor-padding);
-      
-      /* Borders */
-      border: var(--_cn-editor-border);
-      border-bottom: var(--_cn-editor-border-bottom);
-      border-radius: var(--_cn-editor-border-radius);
-      outline: none;
-
-      
-      transition: background 0.3s ease, border 0.3s ease;
-      background: var(--background-editor, black);
-      color: var(--color-on-field);
-      
-      
-      // UI text-styling
-      font-family: var(--cn-font-family-ui);
-      font-weight: var(--cn-font-weight-ui);
-      font-size: var(--cn-font-size-ui);
-      line-height: var(--cn-line-height-ui);
-      letter-spacing: var(--cn-letter-spacing-ui);
-    }
-    :host textarea:hover {
-      border-bottom: 1px solid var(--color-border-hover);
-    }
-    :host textarea:focus {
-        outline: none;
-        border-bottom: 1px solid var(--color-border-focus);
-    }
-    :host textarea::placeholder {
-      // UI text-styling
-      font-family: var(--cn-font-family-ui);
-      font-weight: var(--cn-font-weight-ui);
-      font-size: var(--cn-font-size-ui);
-      line-height: var(--cn-line-height-ui);
-      letter-spacing: var(--cn-letter-spacing-ui);
-      color: var(--color-on-field-placeholder, blue)
-    }
-    :host textarea::selection {
-      background: var(--color-selection);
     }
   `;
 }
