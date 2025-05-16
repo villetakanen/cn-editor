@@ -49,7 +49,13 @@ export const editorBaseTheme = EditorView.theme(
     '.cm-content': {
       padding: 'var(--_cn-editor-padding)',
       color: 'var(--color-on-field)',
-      caretColor: 'var(--color-on-field)', // Sets the cursor color
+      caretColor: 'red', // var(--color-notify)', // Sets the cursor color
+    },
+
+    '&.cm-focused .cm-cursor': {
+      borderLeftColor: 'var(--color-on-field)', // Use your CSS variable, with fallback
+      // If you want a thicker cursor:
+      borderLeftWidth: '4px',
     },
 
     // Hover state for the editor (when not focused)
