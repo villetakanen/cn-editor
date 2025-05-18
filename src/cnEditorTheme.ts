@@ -24,7 +24,7 @@ export const editorBaseTheme = EditorView.theme(
 
       // Background and Text color from :host textarea
       // Background applied to the root, text color to the content area usually
-      background: 'var(--background-editor, black)',
+      background: 'var(--color-input, black)',
 
       // Font properties applied broadly, can be overridden by more specific selectors if needed
       fontFamily: 'var(--cn-font-family-ui)',
@@ -49,13 +49,12 @@ export const editorBaseTheme = EditorView.theme(
     '.cm-content': {
       padding: 'var(--_cn-editor-padding)',
       color: 'var(--color-on-field)',
-      caretColor: 'red', // var(--color-notify)', // Sets the cursor color
     },
 
     '&.cm-focused .cm-cursor': {
-      borderLeftColor: 'var(--color-on-field)', // Use your CSS variable, with fallback
+      borderLeftColor: 'var(--color-caret)', // Use your CSS variable, with fallback
       // If you want a thicker cursor:
-      borderLeftWidth: '4px',
+      borderLeftWidth: '2px',
     },
 
     // Hover state for the editor (when not focused)
@@ -97,7 +96,7 @@ export const editorBaseTheme = EditorView.theme(
     /* --- Styling for Active Line --- */
     '.cm-activeLine': {
       borderRadius: '4px', // Optional, if you want rounded corners
-      backgroundColor: 'var(--color-surface-1, cyan)', // Background for active line in content
+      backgroundColor: 'var(--color-input-focus, cyan)', // Background for active line in content
       // You can also add other styles like a subtle border if desired
       // E.g., borderLeft: "2px solid var(--color-accent, blue)"
     },
@@ -125,11 +124,9 @@ export const editorBaseTheme = EditorView.theme(
       backgroundColor:
         'var(--color-elevation-3, var(--background-editor, black))',
     },
-
-    '& .cm-punctuation, & .cm-linkMark, & .cm-emphasisMark, & .cm-strongMark, & .cm-headingMark, & .cm-quoteMark, & .cm-listMark, & .cm-processingInstruction':
-      {
-        color: 'red',
-      },
+    '& .cm-inline-code': {
+      color: 'red',
+    },
   },
   { dark: document.body.classList.contains('dark') },
 );
@@ -140,27 +137,41 @@ export const cnMarkdownHighlightStyle = HighlightStyle.define([
     fontSize: 'var(--cn-heading-1-font-size)',
     fontWeight: 'var(--cn-heading-1-font-weight)',
     lineHeight: 'var(--cn-heading-1-line-height)',
+    color: 'var(--color-heading-1)',
   },
   {
     tag: t.heading2,
     fontSize: 'var(--cn-heading-2-font-size)',
     fontWeight: 'var(--cn-heading-2-font-weight)',
     lineHeight: 'var(--cn-heading-2-line-height)',
+    color: 'var(--color-heading-1)',
   },
   {
     tag: t.heading3,
     fontSize: 'var(--cn-heading-3-font-size)',
     fontWeight: 'var(--cn-heading-3-font-weight)',
     lineHeight: 'var(--cn-heading-3-line-height)',
+    color: 'var(--color-heading-2)',
   },
   {
     tag: t.heading4,
     fontSize: 'var(--cn-heading-4-font-size)',
     fontWeight: 'var(--cn-heading-4-font-weight)',
     lineHeight: 'var(--cn-heading-4-line-height)',
+    color: 'var(--color-heading-2)',
   },
 
-  { tag: t.strong, fontWeight: 'bold' },
-  { tag: t.emphasis, fontStyle: 'italic' },
+  { tag: t.strong, fontWeight: 'bold', color: 'var(--color-on-code-strong)' },
+  {
+    tag: t.emphasis,
+    fontStyle: 'italic',
+    color: 'var(--color-on-code-emphasis)',
+  },
   { tag: t.link, textDecoration: 'underline' },
+  {
+    tag: t.monospace,
+    color: 'var(--color-on-code)',
+    backgroundColor: 'var(--color-code)',
+    fontFamily: 'var(--cn-font-family-mono, monospace)',
+  },
 ]);

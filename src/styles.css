@@ -8,4 +8,18 @@ cn-editor {
   --_cn-editor-border: var(--cn-editor-border, none);
   --_cn-editor-border-bottom: var(--cn-border);
   --_cn-editor-border-radius: var(--cn-border-radius-field, 0 1rem 0 0);
+  --color-caret: light-dark(var(--chroma-primary-90), var(--chroma-primary-30));
+  --color-on-code-strong: light-dark(
+    var(--chroma-primary-80),
+    var(--chroma-primary-40)
+  );
+  --color-on-code-emphasis: light-dark(
+    var(--chroma-surface-70),
+    var(--chroma-surface-40)
+  );
+  --color-on-code: light-dark(
+    var(--chroma-primary-80),
+    var(--chroma-primary-10)
+  );
+  --color-code: light-dark(var(--chroma-primary-10), var(--chroma-primary-99));
 }
