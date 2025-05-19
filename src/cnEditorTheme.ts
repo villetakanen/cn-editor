@@ -127,6 +127,9 @@ export const editorBaseTheme = EditorView.theme(
     '& .cm-inline-code': {
       color: 'red',
     },
+    '& .cm-quote': {
+      backgroundColor: 'var(--color-secondary)',
+    },
   },
   { dark: document.body.classList.contains('dark') },
 );
@@ -173,5 +176,9 @@ export const cnMarkdownHighlightStyle = HighlightStyle.define([
     color: 'var(--color-on-code)',
     backgroundColor: 'var(--color-code)',
     fontFamily: 'var(--cn-font-family-mono, monospace)',
+  },
+  {
+    tag: t.quote,
+    class: 'cm-quote',
   },
 ]);
