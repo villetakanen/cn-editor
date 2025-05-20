@@ -7,9 +7,7 @@ import {
 } from '@codemirror/commands'; // Examples
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 // Import necessary syntax highlighting tools
-import {
-  syntaxHighlighting,
-} from '@codemirror/language'; // <<< ADD THIS IMPORT
+import { syntaxHighlighting } from '@codemirror/language'; // <<< ADD THIS IMPORT
 import { languages } from '@codemirror/language-data';
 import {
   type Compartment,
