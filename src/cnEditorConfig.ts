@@ -8,7 +8,6 @@ import {
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 // Import necessary syntax highlighting tools
 import {
-  defaultHighlightStyle,
   syntaxHighlighting,
 } from '@codemirror/language'; // <<< ADD THIS IMPORT
 import { languages } from '@codemirror/language-data';

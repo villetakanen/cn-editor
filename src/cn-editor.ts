@@ -58,7 +58,7 @@ export class CnEditor extends LitElement {
     this._internals.setFormValue(this.value);
   }
 
-  private _handleHostFocus(event: FocusEvent) {
+  private _handleHostFocus(_event: FocusEvent) {
     // This is the native focus event handler for the <cn-editor> host.
     // External listeners will receive THIS event.
     // console.log('[CN-EDITOR] _handleHostFocus (Native Host Focus) CALLED. Current activeElement:', document.activeElement);
@@ -116,7 +116,7 @@ export class CnEditor extends LitElement {
               new Event('input', { bubbles: true, composed: true }),
             );
           },
-          onFocus: (cmFocusEvent, view) => {
+          onFocus: (_cmFocusEvent, view) => {
             // This is called when CodeMirror's contentDOM itself gains focus.
             // This is the most reliable place to set _valueOnFocus.
             this._valueOnFocus = view.state.doc.toString();
