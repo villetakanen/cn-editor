@@ -96,7 +96,7 @@ export const editorBaseTheme = EditorView.theme(
     /* --- Styling for Active Line --- */
     '.cm-activeLine': {
       borderRadius: '4px', // Optional, if you want rounded corners
-      backgroundColor: 'var(--color-input-focus, cyan)', // Background for active line in content
+      backgroundColor: 'transparent', // Background for active line in content
       // You can also add other styles like a subtle border if desired
       // E.g., borderLeft: "2px solid var(--color-accent, blue)"
     },
