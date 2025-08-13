@@ -15,10 +15,10 @@ import {
   type Extension,
 } from '@codemirror/state';
 import {
-  EditorView,
   placeholder as cmPlaceholder,
   drawSelection,
   dropCursor,
+  EditorView,
   highlightActiveLine,
   highlightActiveLineGutter,
   highlightSpecialChars,
@@ -29,6 +29,7 @@ import {
 import { cnMarkdownHighlightStyle, editorBaseTheme } from './cnEditorTheme';
 // *** Custom Extensions ******************************************************
 import { pasteHtmlAsMarkdown } from './cnPasteHandler';
+
 // import { liveMarkdownDecorations } from './live-markdown-decorations'; // For Phase 3
 
 // Define an interface for the callbacks for clarity

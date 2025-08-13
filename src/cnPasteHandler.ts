@@ -1,8 +1,8 @@
 import type { Extension } from '@codemirror/state'; // Import Extension type for clarity
 import { EditorView } from '@codemirror/view';
 import DOMPurify from 'dompurify';
-import TurndownService from 'turndown';
 import type { Plugin } from 'turndown';
+import TurndownService from 'turndown';
 import { gfm } from 'turndown-plugin-gfm';
 
 // --- Initialize and configure Turndown ---

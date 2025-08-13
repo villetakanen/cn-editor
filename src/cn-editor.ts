@@ -1,11 +1,11 @@
 import { Compartment, EditorState } from '@codemirror/state';
 import {
-  EditorView,
   placeholder as cmPlaceholder,
+  EditorView,
   lineNumbers,
 } from '@codemirror/view';
 // Libs
-import { LitElement, css, html } from 'lit';
+import { css, html, LitElement } from 'lit';
 import { customElement, property, query } from 'lit/decorators.js';
 
 // Local imports
